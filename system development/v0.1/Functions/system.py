@@ -2,10 +2,6 @@ import logging
 import torch
 import time
 
-from docling.chunking import HybridChunker
-from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
-from transformers import AutoTokenizer
-
 logging.basicConfig(level=logging.INFO,
                      format='%(asctime)s - %(levelname)s - %(message)s',
                      datefmt='%Y-%m-%d %I:%M:%S %p')
@@ -36,24 +32,3 @@ def giveGPUstatus() -> None:
         logger.info(f"seconds: {round(time.time() - start, 3)}")
         logger.info(f"ok: {z.shape}, {z.dtype}")
         logger.info(f"{'=' * 50}\n")
-
-def initializeDoclingChunker() -> list[HybridChunker, HuggingFaceTokenizer]:
-        EMBED_MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
-        MAX_TOKENS = 400
-
-        logger.info("=" * 50)
-        logger.info(f"Initializing Docling Chunker with model: {EMBED_MODEL_ID} and max tokens: {MAX_TOKENS}")
-        tokenizer = HuggingFaceTokenizer(
-                tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL_ID),
-                max_tokens = MAX_TOKENS
-        )
-
-        logger.info(f"Initializing HybridChunker with tokenizer and merge_peers set to True")
-        logger.info("=" * 50 + "\n")
-        chunker = HybridChunker(
-                tokenizer=tokenizer,
-                merge_peers = True
-        )
-
-        chunkingTools = [chunker, tokenizer]
-        return chunkingTools

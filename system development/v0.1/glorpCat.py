@@ -1,14 +1,20 @@
 from Functions.utilities import logger, t
+from Functions.agent import Agent
 from Functions import system
-from ollama import chat
 
 system.giveGPUstatus()
 
 t.tic()
-# Use the generate function for a one-off prompt
-conversation = [
-    {"role" : "user", "content" : "Hello, how are you?"}
-]
-reply = chat(model="llama2", messages=conversation)
-print(reply.message.content)
+
+agent = Agent()
+
+while True:
+
+    user = input("\n\nYou: ")
+
+    if not user:
+        break
+
+    agent.chat(user)
+
 t.toc("\nChat duration")
