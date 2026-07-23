@@ -22,5 +22,5 @@ class TimeTool(Tool):
             }
         }
 
-    def execute(self):
+    async def execute(self):
         return datetime.now().strftime("%I:%M:%S %p %B %d, %Y")

@@ -22,7 +22,6 @@ class ToolManager:
         self.tools[tool.name] = tool
 
     def load_tools(self):
-
         for _, module_name, _ in pkgutil.iter_modules(
             Functions.Tools.__path__
         ):
@@ -43,10 +42,10 @@ class ToolManager:
     def schema(self):
         return [tool.schema() for tool in self.tools.values()]
 
-    def execute(self, name, **kwargs):
-        return self.tools[name].execute(**kwargs)
+    async def execute(self, name, **kwargs):
+        return await self.tools[name].execute(**kwargs)
 
-    def execute_calls(self, tool_calls):
+    async def execute_calls(self, tool_calls):
 
         messages = []
 
@@ -55,7 +54,7 @@ class ToolManager:
             name = call.function.name
             args = call.function.arguments
 
-            result = self.execute(name, **args)
+            result = await self.execute(name, **args)
 
             messages.append({
                 "role": "tool",

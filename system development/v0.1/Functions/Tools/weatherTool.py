@@ -132,6 +132,6 @@ class WeatherTool(Tool):
         }
         
 
-    def execute(self, location):
+    async def execute(self, location):
             location = self._geocode(location)
             return self._weather(location)

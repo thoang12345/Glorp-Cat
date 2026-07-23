@@ -4,31 +4,33 @@ from Functions.Agent.toolManager import ToolManager
 from Functions.Agent.conversations import Conversation
 
 class Agent:
+    def __init__(
+        self,
+        tool_manager,
+        conversation,
+        mcp_manager
+    ):
+        self.tool_manager = tool_manager
+        self.conversation = conversation
+        self.mcp_manager = mcp_manager
 
-    def __init__(self):
-
-        self.tool_manager = ToolManager()
-        self.conversation = Conversation(
-            "You are a helpful assistant. :)"
-        )
-
-    def chat(self, user_input):
+    async def chat(self, user_input):
         self.conversation.add_user(user_input)
-    
+
         while True:
-            assistant = streamResponse(self.conversation.messages, self.tool_manager)
+            assistant = await streamResponse(self.conversation.messages, self.tool_manager)
 
             self.conversation.add_assistant(
-                    assistant["thinking"],
-                    assistant["content"],
-                    assistant["tool_calls"]
+                assistant["thinking"],
+                assistant["content"],
+                assistant["tool_calls"]
             )
 
             if not assistant["tool_calls"]:
                 break
 
             self.conversation.add_tool_messages(
-                self.tool_manager.execute_calls(
+                await self.tool_manager.execute_calls(
                     assistant["tool_calls"]
                 )
             )

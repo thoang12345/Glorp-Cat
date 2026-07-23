@@ -1,20 +1,48 @@
-from Functions.utilities import logger, t
-from Functions.agent import Agent
-from Functions import system
+import asyncio
 
-system.giveGPUstatus()
+from Functions.Agent.agent import Agent
+from Functions.Agent.conversations import Conversation
+from Functions.Agent.toolManager import ToolManager
+from Functions.MCP.manager import MCPManager
 
-t.tic()
+async def main():
+    tool_manager = ToolManager()
+    
 
-agent = Agent()
+    mcp = MCPManager()
 
-while True:
+    await mcp.add_server(
+        "ddgs",
+        command="ddgs",
+        args=["mcp"]
+    )
 
-    user = input("\n\nYou: ")
+    for tool in await mcp.discover_tools():
+        tool_manager.register(tool)
 
-    if not user:
-        break
+    for name in tool_manager.tools:
+        print(f" - {name}")
+        
+    conversation = Conversation(
+        "You are GlorpCat. You are a helpful assistant. :)"
+    )
 
-    agent.chat(user)
+    agent = Agent(
+        tool_manager=tool_manager,
+        conversation=conversation,
+        mcp_manager=mcp
+    )
 
-t.toc("\nChat duration")
+    try:
+        while True:
+            user = input("\n\nYou: ")
+
+            if not user:
+                break
+            await agent.chat(user)
+
+    finally:
+        await mcp.shutdown()
+
+if __name__ == "__main__":
+    asyncio.run(main())

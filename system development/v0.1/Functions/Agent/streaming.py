@@ -5,7 +5,7 @@ import ollama
 GREY = "\033[90m"
 RESET = "\033[0m"
 
-def streamResponse(messages: dict, toolManager) -> dict[str, str]:
+async def streamResponse(messages: dict, toolManager) -> dict[str, str]:
     inThinking = False
     responseContent = ""
     thinkingContent = ""
