@@ -1,10 +1,13 @@
 import importlib
 import inspect
 import pkgutil
-
+import time
 from Functions.tool import Tool
 import Functions.Tools
 import json
+
+BLUE_GREY = "\033[38;2;120;140;170m"
+RESET = "\033[0m"
 
 class ToolManager:
 
@@ -42,10 +45,29 @@ class ToolManager:
     def schema(self):
         return [tool.schema() for tool in self.tools.values()]
 
-    async def execute(self, name, **kwargs):
-        return await self.tools[name].execute(**kwargs)
+    async def execute(self, stats, name, **kwargs):
+        print(f"{BLUE_GREY}\n" + "=" * 50)
+        print(f"🔧 Executing Tool: {name}")
 
-    async def execute_calls(self, tool_calls):
+        if kwargs:
+            print("\nArguments:")
+            for key, value in kwargs.items():
+                print(f"  {key}: {value}")
+
+        print(RESET, end="")  # Reset before the tool runs
+
+        start = time.perf_counter()
+        result = await self.tools[name].execute(**kwargs)
+        elapsed = time.perf_counter() - start
+
+        stats.add_tool(name, elapsed)
+
+        print(f"{BLUE_GREY}\n✓ Completed in {elapsed:.2f} s")
+        print("=" * 50 + RESET + "\n")
+
+        return result
+
+    async def execute_calls(self, stats, tool_calls):
 
         messages = []
 
@@ -54,7 +76,7 @@ class ToolManager:
             name = call.function.name
             args = call.function.arguments
 
-            result = await self.execute(name, **args)
+            result = await self.execute(stats, name, **args)
 
             messages.append({
                 "role": "tool",

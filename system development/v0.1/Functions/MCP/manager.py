@@ -11,6 +11,7 @@ class MCPManager:
         args
     ):
         server = MCPServer(
+            name=name,
             command=command,
             args=args
         )
@@ -29,5 +30,5 @@ class MCPManager:
         return tools
 
     async def shutdown(self):
-        for server in self.servers.values():
+        for server in reversed(list(self.servers.values())):
             await server.disconnect()

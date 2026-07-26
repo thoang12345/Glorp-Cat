@@ -1,24 +1,32 @@
-from Functions.model import modelName, chatBotName, stream, thinking
 from Functions.Agent.streaming import streamResponse
-from Functions.Agent.toolManager import ToolManager
-from Functions.Agent.conversations import Conversation
+from Functions.responseStats import ResponseStats
 
 class Agent:
     def __init__(
         self,
         tool_manager,
         conversation,
-        mcp_manager
+        mcp_manager,
+        model_manager
     ):
         self.tool_manager = tool_manager
         self.conversation = conversation
         self.mcp_manager = mcp_manager
+        self.model_manager = model_manager
 
     async def chat(self, user_input):
+        stats = ResponseStats()
+        stats.set_model(
+            self.model_manager.info
+        )
         self.conversation.add_user(user_input)
 
         while True:
-            assistant = await streamResponse(self.conversation.messages, self.tool_manager)
+            assistant = await streamResponse(
+                self.conversation.messages, 
+                self.tool_manager,
+                stats
+                )
 
             self.conversation.add_assistant(
                 assistant["thinking"],
@@ -31,8 +39,12 @@ class Agent:
 
             self.conversation.add_tool_messages(
                 await self.tool_manager.execute_calls(
+                    stats,
                     assistant["tool_calls"]
                 )
             )
+
+        stats.finish()
+        stats.print_stats()
 
         return assistant["content"]
