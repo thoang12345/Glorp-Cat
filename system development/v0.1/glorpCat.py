@@ -39,7 +39,11 @@ async def main():
         print(f" - {name}")
         
     conversation = Conversation(
-        f"You are {CHATBOT_NAME}. You are a helpful assistant. :)"
+        f"You are {CHATBOT_NAME}. You are a helpful assistant. Have fun! :)"
+        f"You have access to a vector database containing documents, handbooks, notes, manuals, and other user-provided knowledge."
+        f"When a question could reasonably be answered from these documents—even if you have general knowledge about the topic—prefer retrieving the relevant information first."
+        f"If you do not know which collection is appropriate, call `get_collections` before using `query_collection`."
+        f"The 'Downey' database contains a 'arts_lab_graduate_handbook', that contains information relating to graduate studies, conferences, paper style guides and more."
     )
 
     agent = Agent(
