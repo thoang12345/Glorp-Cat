@@ -4,7 +4,7 @@ import chromadb
 from sentence_transformers import CrossEncoder
 
 client = chromadb.PersistentClient(path=CHROMADB_PATH)
-model = CrossEncoder(RERANKER_MODEL)
+model = CrossEncoder(RERANKER_MODEL, device="cpu")
 
 class QueryCollection(Tool):
     def __init__(self):
@@ -72,7 +72,7 @@ class QueryCollection(Tool):
 
         results = collection.query(
             query_texts=[query],
-            n_results=20
+            n_results=10
         )
 
         try:
@@ -89,7 +89,7 @@ class QueryCollection(Tool):
                     results["documents"][0],
                     results["metadatas"][0] or [{}] * len(results["documents"][0])
                 )
-            ][:10]
+            ][:5]
 
         llm_payload = {
             "query": query,

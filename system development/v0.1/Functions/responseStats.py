@@ -2,7 +2,7 @@ import time
 
 TAB = "  "
 TOOL_WIDTH = 30
-GREY = "\033[38;2;170;170;170m"
+GREEN = "\033[38;2;16;163;127m"
 RESET = "\033[0m"
 
 
@@ -32,18 +32,22 @@ class ResponseStats:
         self.prompt_tokens = prompt_tokens
         self.generated_tokens = generated_tokens
 
-        self.load_time = load_duration / 1_000_000_000
-        self.model_time = total_duration / 1_000_000_000
+        self.load_time = load_duration / 1e9
+        self.model_time = total_duration / 1e9
 
         self.prompt_speed = (
             prompt_tokens /
-            (prompt_duration / 1_000_000_000)
+            (prompt_duration / 1e9)
         )
 
         self.generation_speed = (
             generated_tokens /
-            (generation_duration / 1_000_000_000)
+            (generation_duration / 1e9)
         )
+        self.load_time = load_duration / 1e9
+        self.thinking_time = prompt_duration / 1e9
+        self.response_time = generation_duration / 1e9
+        self.model_time = total_duration / 1e9
 
     def finish(self):
         self.total_time = time.perf_counter() - self.start_time
@@ -60,7 +64,7 @@ class ResponseStats:
                     self.model.context_length
                 ) * 100
         
-        print(f"{GREY}\n\n" + "=" * 50)
+        print(f"{GREEN}\n\n" + "=" * 50)
         print("📊 Response Statistics:")
 
         print("\n🧠 Model:")
@@ -87,6 +91,9 @@ class ResponseStats:
             self.stat("None", "")
 
         print("\n⏱ Response:")
-        self.stat("Total", f"{self.total_time:.2f} s")
+        self.stat("Thinking", f"{self.thinking_time:.2f} s")
+        self.stat("Generation", f"{self.response_time:.2f} s")
+        self.stat("Model Total", f"{self.model_time:.2f} s")
+        self.stat("Overall Total", f"{self.total_time:.2f} s")
 
         print("=" * 50 + RESET)
