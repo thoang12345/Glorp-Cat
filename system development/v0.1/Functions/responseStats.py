@@ -60,7 +60,7 @@ class ResponseStats:
 
     def print_stats(self):
         context_usage = (
-                    self.prompt_tokens /
+                    (self.prompt_tokens + 1) /
                     self.model.context_length
                 ) * 100
         

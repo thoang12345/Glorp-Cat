@@ -1,4 +1,4 @@
-from Functions.Model.config import MODEL_NAME, CHATBOT_NAME, STREAM, THINKING
+from Functions.Model.config import MODEL_NAME, CHATBOT_NAME, STREAM, THINKING, CONTEXT_WINDOW
 from Functions.utilities import t
 import ollama
 
@@ -15,9 +15,9 @@ async def streamResponse(messages: dict, toolManager, stats) -> dict[str, str]:
     response = ollama.chat(
         model=MODEL_NAME,
         messages=messages,
-        stream=STREAM,
-        think=THINKING,
-        tools=toolManager.schema()
+        stream=True,
+        think=True,
+        tools=toolManager.schema(),
     )
 
     last_chunk = None

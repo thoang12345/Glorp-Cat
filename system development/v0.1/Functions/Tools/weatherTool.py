@@ -21,7 +21,7 @@ class WeatherTool(Tool):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Get the current weather for a city.",
+                "description": "Get the current weather for a city. Returns it in Celsius.",
                 "parameters": {
                     "type": "object",
                     "properties": {
