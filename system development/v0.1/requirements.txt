@@ -1,0 +1,25 @@
+# Glorp-Cat Python dependencies
+#
+# Install with:
+#   python -m pip install -r requirements.txt
+#
+# IMPORTANT:
+# PyTorch/torchvision/torchaudio are intentionally NOT included here.
+# They use AMD's ROCm package index and should be installed separately:
+#
+# python -m pip install --index-url https://repo.amd.com/rocm/whl-multi-arch/ \
+#     "torch[device-all]==2.12.0+rocm7.14.0" \
+#     "torchvision[device-all]==0.27.0+rocm7.14.0" \
+#     "torchaudio==2.11.0+rocm7.14.0"
+
+# Application dependencies
+pytictoc
+ollama
+chromadb
+sentence-transformers
+
+# MCP SDK
+mcp[cli]>=1.26,<2
+
+# MCP servers
+ddgs[mcp]
