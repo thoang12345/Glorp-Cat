@@ -1,5 +1,4 @@
 MODEL_NAME = "nemotron-3.5-lightning-fixed:30b"
-#MODEL_NAME = "gemma4:26b"
 CHATBOT_NAME = "GlorpCat"
 RERANKER_MODEL = "BAAI/bge-reranker-base"
 
