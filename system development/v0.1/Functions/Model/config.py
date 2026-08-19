@@ -7,3 +7,4 @@ CHROMADB_PATH = "/home/thienan/Documents/GitHub/PaperParsing/Docling Parsing/v0.
 STREAM = True
 THINKING = True
 CONTEXT_WINDOW = 16384
+DEFAULT_LOCATION = "Columbia, South Carolina, United States"

@@ -1,13 +1,37 @@
 from Functions.tool import Tool
+from Functions.Model.config import DEFAULT_LOCATION
 import requests
 
 WEATHER_CODES = {
-            0: "Clear sky",
-            1: "Mainly clear",
-            2: "Partly cloudy",
-            3: "Overcast",
-            45: "Fog",
-        }
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
+    71: "Slight snowfall",
+    73: "Moderate snowfall",
+    75: "Heavy snowfall",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+}
 
 class WeatherTool(Tool):
     def __init__(self):
@@ -20,17 +44,31 @@ class WeatherTool(Tool):
         return {
             "type": "function",
             "function": {
-                "name": "get_weather",
-                "description": "Get the current weather for a city. Returns it in Celsius.",
+                "name": self.name,
+                "description": (
+                    "Get weather for a location and date. "
+                    "If no location is provided, uses the device's current location. "
+                    "If no date is provided, returns today's weather."
+                ),
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "location": {
                             "type": "string",
-                            "description": "City, town, or other location."
+                            "description": (
+                                "City, town, or location. Optional. "
+                                "Omit to use the device's current location."
+                            )
+                        },
+                        "date": {
+                            "type": "string",
+                            "description": (
+                                "Date to retrieve weather for in YYYY-MM-DD format. "
+                                "Omit for today."
+                            )
                         }
                     },
-                    "required": ["location"]
+                    "required": []
                 }
             }
         }
@@ -93,45 +131,107 @@ class WeatherTool(Tool):
 
         raise ValueError(f"Could not find location '{location}'.")
 
-    def _weather(self, location):
+    def _weather(self, location, date=None):
         WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
-        
 
         weather_params = {
             "latitude": location["latitude"],
             "longitude": location["longitude"],
-            "current": [
+            "timezone": "auto"
+        }
+
+        # Current weather
+        if date is None:
+            weather_params["current"] = [
                 "temperature_2m",
                 "apparent_temperature",
                 "wind_speed_10m",
                 "weather_code"
             ]
-        }
 
-        weather_response = requests.get(WEATHER_URL, params=weather_params, timeout=5)
+        # Future daily forecast
+        else:
+            weather_params.update({
+                "start_date": date,
+                "end_date": date,
+                "daily": [
+                    "weather_code",
+                    "temperature_2m_max",
+                    "temperature_2m_min",
+                    "apparent_temperature_max",
+                    "apparent_temperature_min",
+                    "precipitation_probability_max",
+                    "wind_speed_10m_max"
+                ]
+            })
+
+        weather_response = requests.get(
+            WEATHER_URL,
+            params=weather_params,
+            timeout=5
+        )
+
         weather_response.raise_for_status()
         weather_data = weather_response.json()
 
-        if "current" not in weather_data:
-            raise ValueError("Could not retrieve weather data.")
+        # Parse current weather
+        if date is None:
+            if "current" not in weather_data:
+                raise ValueError("Could not retrieve current weather data.")
 
-        current = weather_data["current"]
-        condition = WEATHER_CODES.get(
-            current["weather_code"],
-            "Unknown"
-        )
+            current = weather_data["current"]
+
+            return {
+                "location": location["name"],
+                "country": location["country"],
+                "type": "current",
+                "time": current["time"],
+                "temperature": current["temperature_2m"],
+                "feels_like": current["apparent_temperature"],
+                "condition": WEATHER_CODES.get(
+                    current["weather_code"],
+                    "Unknown"
+                ),
+                "wind_speed": current["wind_speed_10m"],
+                "weather_code": current["weather_code"]
+            }
+
+        # Parse future forecast
+        if "daily" not in weather_data:
+            raise ValueError(
+                f"Could not retrieve weather forecast for '{date}'."
+            )
+
+        daily = weather_data["daily"]
 
         return {
-            "location" : location["name"],
-            "country" : location["country"],
-            "temperature": current["temperature_2m"],
-            "feels_like": current["apparent_temperature"],
-            "condition" : condition,
-            "wind_speed": current["wind_speed_10m"],
-            "weather_code": current["weather_code"]
+            "location": location["name"],
+            "country": location["country"],
+            "type": "forecast",
+            "date": daily["time"][0],
+            "temperature_max": daily["temperature_2m_max"][0],
+            "temperature_min": daily["temperature_2m_min"][0],
+            "feels_like_max": daily["apparent_temperature_max"][0],
+            "feels_like_min": daily["apparent_temperature_min"][0],
+            "precipitation_probability": daily[
+                "precipitation_probability_max"
+            ][0],
+            "wind_speed_max": daily["wind_speed_10m_max"][0],
+            "condition": WEATHER_CODES.get(
+                daily["weather_code"][0],
+                "Unknown"
+            ),
+            "weather_code": daily["weather_code"][0]
         }
         
 
-    async def execute(self, location):
-            location = self._geocode(location)
-            return self._weather(location)
+    async def execute(self, location=None, date=None):
+        if not location or not location.strip():
+            location = DEFAULT_LOCATION
+
+        location = self._geocode(location)
+
+        return self._weather(
+            location,
+            date=date
+        )
