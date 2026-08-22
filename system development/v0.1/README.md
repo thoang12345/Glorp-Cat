@@ -18,15 +18,29 @@ From the GlorpCat project directory, activate your Python virtual environment:
 source .venv/bin/activate
 ```
 
-Then start the browser UI:
+Start the **FastAPI server**:
 
 ```bash
-python web.py
+uvicorn web.server:app --reload
 ```
 
-Open the address printed in the terminal in your web browser.
+`--reload` is useful during development because the FastAPI server automatically restarts when Python source files change.
 
-Keep the terminal running while using GlorpCat. Press `Ctrl+C` in the terminal when you want to stop the server.
+Once the server starts, Uvicorn will display an address similar to:
+
+```text
+INFO:     Uvicorn running on http://127.0.0.1:8000
+```
+
+Open the following address in your browser:
+
+```text
+http://127.0.0.1:8000
+```
+
+Keep the terminal running while using GlorpCat. Press `Ctrl+C` when you want to stop the FastAPI server.
+
+If the browser UI uses a separate frontend development server, start it in another terminal after activating the required environment.
 
 ---
 
