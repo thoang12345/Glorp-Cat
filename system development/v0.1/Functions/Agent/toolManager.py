@@ -45,38 +45,64 @@ class ToolManager:
     def schema(self):
         return [tool.schema() for tool in self.tools.values()]
 
-    async def execute(self, stats, name, **kwargs):
-        print(f"{BLUE_GREY}\n" + "=" * 50)
-        print(f"🔧 Executing Tool: {name}")
+    async def execute(
+        self,
+        stats,
+        name,
+        on_event=None,
+        **kwargs
+    ):
+        async def emit(event_type, data):
+            if on_event:
+                await on_event({
+                    "type": event_type,
+                    "data": data
+                })
 
-        if kwargs:
-            print("\nArguments:")
-            for key, value in kwargs.items():
-                print(f"  {key}: {value}")
-
-        print(RESET, end="")  # Reset before the tool runs
+        await emit(
+            "tool_started",
+            {
+                "name": name,
+                "arguments": kwargs
+            }
+        )
 
         start = time.perf_counter()
+
         result = await self.tools[name].execute(**kwargs)
+
         elapsed = time.perf_counter() - start
 
         stats.add_tool(name, elapsed)
 
-        print(f"{BLUE_GREY}\n✓ Completed in {elapsed:.2f} s")
-        print("=" * 50 + RESET + "\n")
+        await emit(
+            "tool_finished",
+            {
+                "name": name,
+                "elapsed": elapsed
+            }
+        )
 
         return result
 
-    async def execute_calls(self, stats, tool_calls):
-
+    async def execute_calls(
+        self,
+        stats,
+        tool_calls,
+        on_event=None
+    ):
         messages = []
 
         for call in tool_calls:
-
             name = call.function.name
             args = call.function.arguments
 
-            result = await self.execute(stats, name, **args)
+            result = await self.execute(
+                stats,
+                name,
+                on_event=on_event,
+                **args
+            )
 
             messages.append({
                 "role": "tool",

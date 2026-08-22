@@ -28,25 +28,29 @@ class ResponseStats:
         load_duration,
         total_duration,
     ):
-
         self.prompt_tokens = prompt_tokens
         self.generated_tokens = generated_tokens
 
-        self.load_time = load_duration / 1e9
-        self.model_time = total_duration / 1e9
+        # Convert Ollama durations from nanoseconds to seconds
+        prompt_seconds = prompt_duration / 1e9
+        generation_seconds = generation_duration / 1e9
 
+        # Avoid division by zero if Ollama reports a duration of 0
         self.prompt_speed = (
-            prompt_tokens /
-            (prompt_duration / 1e9)
+            prompt_tokens / prompt_seconds
+            if prompt_seconds > 0
+            else 0.0
         )
 
         self.generation_speed = (
-            generated_tokens /
-            (generation_duration / 1e9)
+            generated_tokens / generation_seconds
+            if generation_seconds > 0
+            else 0.0
         )
+
         self.load_time = load_duration / 1e9
-        self.thinking_time = prompt_duration / 1e9
-        self.response_time = generation_duration / 1e9
+        self.thinking_time = prompt_seconds
+        self.response_time = generation_seconds
         self.model_time = total_duration / 1e9
 
     def finish(self):
@@ -58,22 +62,68 @@ class ResponseStats:
     def stat(self, label, value):
         print(f"{TAB}{label:<{TOOL_WIDTH}}{value}")
 
+    def to_dict(self):
+        if self.model.context_length > 0:
+            context_usage = (
+                (self.prompt_tokens + 1) /
+                self.model.context_length
+            ) * 100
+        else:
+            context_usage = None
+
+        return {
+            "model": {
+                "context_length": self.model.context_length,
+                "context_used": self.prompt_tokens,
+                "context_usage": context_usage,
+            },
+
+            "tokens": {
+                "prompt": self.prompt_tokens,
+                "generated": self.generated_tokens,
+            },
+
+            "speed": {
+                "prompt": self.prompt_speed,
+                "generation": self.generation_speed,
+            },
+
+            "timing": {
+                "load": self.load_time,
+                "thinking": self.thinking_time,
+                "generation": self.response_time,
+                "model_total": self.model_time,
+                "overall": self.total_time,
+            },
+
+            "tools": self.tool_times,
+        }
+
     def print_stats(self):
-        context_usage = (
-                    (self.prompt_tokens + 1) /
-                    self.model.context_length
-                ) * 100
+        if self.model.context_length > 0:
+            context_usage = (
+                (self.prompt_tokens + 1) /
+                self.model.context_length
+            ) * 100
+        else:
+            context_usage = None
         
         print(f"{GREEN}\n\n" + "=" * 50)
         print("📊 Response Statistics:")
 
         print("\n🧠 Model:")
-        self.stat(
-            "Context",
-            f"{self.prompt_tokens:,} / "
-            f"{self.model.context_length:,} "
-            f"({context_usage:.1f}%)"
-        )
+        if context_usage is not None:
+            self.stat(
+                "Context",
+                f"{self.prompt_tokens:,} / "
+                f"{self.model.context_length:,} "
+                f"({context_usage:.1f}%)"
+            )
+        else:
+            self.stat(
+                "Context",
+                f"{self.prompt_tokens:,} / N/A"
+            )
         self.stat("Prompt Tokens", f"{self.prompt_tokens:,}")
         self.stat("Generated Tokens", f"{self.generated_tokens:,}")
         self.stat("Prompt Speed", f"{self.prompt_speed:.2f} tok/s")

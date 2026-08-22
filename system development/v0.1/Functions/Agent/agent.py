@@ -14,7 +14,7 @@ class Agent:
         self.mcp_manager = mcp_manager
         self.model_manager = model_manager
 
-    async def chat(self, user_input):
+    async def chat(self, user_input, on_event=None):
         stats = ResponseStats()
         stats.set_model(
             self.model_manager.info
@@ -23,10 +23,11 @@ class Agent:
 
         while True:
             assistant = await streamResponse(
-                self.conversation.messages, 
+                self.conversation.messages,
                 self.tool_manager,
-                stats
-                )
+                stats,
+                on_event=on_event
+            )
 
             self.conversation.add_assistant(
                 assistant["thinking"],
@@ -40,11 +41,21 @@ class Agent:
             self.conversation.add_tool_messages(
                 await self.tool_manager.execute_calls(
                     stats,
-                    assistant["tool_calls"]
+                    assistant["tool_calls"],
+                    on_event=on_event
                 )
             )
 
+        await self.model_manager.load_active()
+
         stats.finish()
+
+        if on_event:
+            await on_event({
+                "type": "response_stats",
+                "data": stats.to_dict()
+            })
+
         stats.print_stats()
 
         return assistant["content"]

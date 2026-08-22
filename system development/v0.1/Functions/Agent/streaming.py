@@ -1,18 +1,28 @@
-from Functions.Model.config import MODEL_NAME, CHATBOT_NAME, STREAM, THINKING, CONTEXT_WINDOW
+from Functions.Model.config import MODEL_NAME, STREAM, THINKING, CONTEXT_WINDOW
 from Functions.utilities import t
 import ollama
 
-# ANSI colors
-GREY = "\033[90m"
-RESET = "\033[0m"
+async def streamResponse(
+    messages: dict,
+    toolManager,
+    stats,
+    on_event=None
+) -> dict[str, str]:
 
-async def streamResponse(messages: dict, toolManager, stats) -> dict[str, str]:
-    inThinking = False
+    async def emit(event_type, data):
+        if on_event:
+            await on_event({
+                "type": event_type,
+                "data": data
+            })
+
     responseContent = ""
     thinkingContent = ""
     toolCalls = []
 
-    response = ollama.chat(
+    client = ollama.AsyncClient()
+
+    response = await client.chat(
         model=MODEL_NAME,
         messages=messages,
         stream=True,
@@ -22,23 +32,24 @@ async def streamResponse(messages: dict, toolManager, stats) -> dict[str, str]:
 
     last_chunk = None
 
-    for chunk in response:
+    async for chunk in response:
         last_chunk = chunk
-        if chunk.message.thinking:
-            if not inThinking:
-                inThinking = True
-                print(f"\n{GREY}{CHATBOT_NAME} thinking:\n", end="")
 
+        if chunk.message.thinking:
             thinkingContent += chunk.message.thinking
-            print(chunk.message.thinking, end="", flush=True)
+
+            await emit(
+                "thinking_delta",
+                chunk.message.thinking
+            )
 
         if chunk.message.content:
-            if inThinking:
-                print(f"{RESET}\n\n{CHATBOT_NAME}:\n", end="")
-                inThinking = False
-
             responseContent += chunk.message.content
-            print(chunk.message.content, end="", flush=True)
+
+            await emit(
+                "content_delta",
+                chunk.message.content
+            )
 
         if chunk.message.tool_calls:
             toolCalls.extend(chunk.message.tool_calls)
@@ -51,10 +62,6 @@ async def streamResponse(messages: dict, toolManager, stats) -> dict[str, str]:
         load_duration=last_chunk.load_duration,
         total_duration=last_chunk.total_duration
     )
-
-    # Make sure the terminal color is reset if the stream ends while thinking
-    if inThinking:
-        print(RESET, end="")
 
     return {
         "thinking": thinkingContent,

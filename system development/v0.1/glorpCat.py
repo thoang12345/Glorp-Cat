@@ -1,57 +1,84 @@
 import asyncio
 
-from Functions.Model.config import CHATBOT_NAME
 from Functions.system import giveGPUstatus
-from Functions.Agent.agent import Agent
-from Functions.Agent.conversations import Conversation
-from Functions.Agent.toolManager import ToolManager
-from Functions.MCP.manager import MCPManager
-from Functions.Model.manager import ModelManager
+from Functions.Agent.factory import create_agent, create_runtime
+from Functions.Model.config import CHATBOT_NAME
 
-giveGPUstatus()
+
+GREY = "\033[90m"
+RESET = "\033[0m"
+BLUE_GREY = "\033[38;2;120;140;170m"
+
+class TerminalRenderer:
+    def __init__(self):
+        self.in_thinking = False
+
+    async def handle_event(self, event):
+        event_type = event["type"]
+        data = event["data"]
+
+        if event_type == "thinking_delta":
+            if not self.in_thinking:
+                self.in_thinking = True
+
+                print(
+                    f"\n{GREY}{CHATBOT_NAME} thinking:\n",
+                    end=""
+                )
+
+            print(
+                data,
+                end="",
+                flush=True
+            )
+
+        elif event_type == "content_delta":
+            if self.in_thinking:
+                print(
+                    f"{RESET}\n\n{CHATBOT_NAME}:\n",
+                    end=""
+                )
+
+                self.in_thinking = False
+
+            print(
+                data,
+                end="",
+                flush=True
+            )
+
+        elif event_type == "tool_started":
+            name = data["name"]
+            arguments = data["arguments"]
+
+            print(f"{BLUE_GREY}\n" + "=" * 50)
+            print(f"🔧 Executing Tool: {name}")
+
+            if arguments:
+                print("\nArguments:")
+
+                for key, value in arguments.items():
+                    print(f"  {key}: {value}")
+
+            print(RESET, end="")
+
+        elif event_type == "tool_finished":
+            elapsed = data["elapsed"]
+
+            print(
+                f"{BLUE_GREY}\n"
+                f"✓ Completed in {elapsed:.2f} s"
+            )
+
+            print("=" * 50 + RESET + "\n")
 
 async def main():
-    tool_manager = ToolManager()
-    mcp = MCPManager()
-    model_manager = ModelManager()
+    giveGPUstatus()
 
-    await model_manager.load()
+    runtime = await create_runtime()
+    agent = create_agent(runtime)
 
-    await mcp.add_server(
-        "ddgs",
-        command="ddgs",
-        args=["mcp"]
-    )
-
-    await mcp.add_server(
-        "sequential_thinking",
-        command="npx",
-        args=[
-            "-y",
-            "@modelcontextprotocol/server-sequential-thinking"
-        ]
-    )
-
-    for tool in await mcp.discover_tools():
-        tool_manager.register(tool)
-
-    for name in tool_manager.tools:
-        print(f" - {name}")
-        
-    conversation = Conversation(
-        f"You are {CHATBOT_NAME}. You are a helpful assistant. Have fun! :)"
-        f"You have access to a vector database containing documents, handbooks, notes, manuals, and other user-provided knowledge."
-        f"When a question could reasonably be answered from these documents—even if you have general knowledge about the topic—prefer retrieving the relevant information first."
-        f"If you do not know which collection is appropriate, call `get_collections` before using `query_collection`."
-        f"The 'handbook' database contains a 'arts_lab_graduate_handbook', that contains information relating to graduate studies, conferences, paper style guides and more."
-    )
-
-    agent = Agent(
-        tool_manager=tool_manager,
-        conversation=conversation,
-        mcp_manager=mcp,
-        model_manager=model_manager
-    )
+    renderer = TerminalRenderer()
 
     try:
         while True:
@@ -59,10 +86,14 @@ async def main():
 
             if not user:
                 break
-            await agent.chat(user)
+
+            await agent.chat(
+                user,
+                on_event=renderer.handle_event
+            )
 
     finally:
-        await mcp.shutdown()
+        await runtime.shutdown()
 
 if __name__ == "__main__":
     asyncio.run(main())
