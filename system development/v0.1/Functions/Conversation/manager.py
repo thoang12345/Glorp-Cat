@@ -1,0 +1,120 @@
+from Functions.Agent.factory import create_agent
+
+def make_title(message, max_length=40):
+    title = " ".join(
+        message.strip().split()
+    )
+
+    if not title:
+        return "New chat"
+
+    if len(title) <= max_length:
+        return title
+
+    return title[:max_length].rstrip() + "..."
+
+class ConversationManager:
+    def __init__(self, runtime, database):
+        self.runtime = runtime
+        self.database = database
+
+        # Active Agent instances keyed by conversation ID
+        self.agents = {}
+
+
+    def create(self, title="New chat"):
+        conversation_id = self.database.create_conversation(
+            title
+        )
+
+        agent = create_agent(self.runtime)
+
+        self.agents[conversation_id] = agent
+
+        return conversation_id
+
+
+    def get_agent(self, conversation_id):
+        # Already loaded
+        if conversation_id in self.agents:
+            return self.agents[conversation_id]
+
+        # Otherwise restore it from SQLite
+        stored = self.database.get_conversation(
+            conversation_id
+        )
+
+        if stored is None:
+            return None
+
+        agent = create_agent(
+            self.runtime,
+            messages=stored["messages"]
+        )
+
+        self.agents[conversation_id] = agent
+
+        return agent
+
+    def set_title_from_message(
+        self,
+        conversation_id,
+        message
+    ):
+        conversation = self.database.get_conversation(
+            conversation_id
+        )
+
+        if conversation is None:
+            return None
+
+        # Only automatically title untouched chats
+        if conversation["title"] != "New chat":
+            return conversation["title"]
+
+        title = make_title(message)
+
+        self.database.update_conversation_title(
+            conversation_id,
+            title
+        )
+
+        return title  
+
+    def rename(self, conversation_id, title):
+        conversation = self.database.get_conversation(
+            conversation_id
+        )
+
+        if conversation is None:
+            return None
+
+        self.database.update_conversation_title(
+            conversation_id,
+            title
+        )
+
+        return title
+
+    def delete(self, conversation_id):
+        deleted = self.database.delete_conversation(
+            conversation_id
+        )
+
+        if deleted:
+            self.agents.pop(
+                conversation_id,
+                None
+            )
+
+        return deleted  
+
+    def get_conversation(self, conversation_id):
+        return self.database.get_conversation(
+            conversation_id
+        )
+
+
+    def get_conversations(self):
+        return self.database.get_conversations()
+

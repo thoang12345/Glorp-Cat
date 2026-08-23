@@ -130,6 +130,43 @@ class Database:
 
         return cursor.lastrowid
 
+    def delete_conversation(self, conversation_id):
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM conversations
+            WHERE id = ?
+            """,
+            (conversation_id,)
+        )
+
+        self.connection.commit()
+
+        return cursor.rowcount > 0
+
+    def update_conversation_title(
+        self,
+        conversation_id,
+        title
+    ):
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE conversations
+            SET title = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                title,
+                conversation_id
+            )
+        )
+
+        self.connection.commit()
+
     def create_tables(self):
         cursor = self.connection.cursor()
 

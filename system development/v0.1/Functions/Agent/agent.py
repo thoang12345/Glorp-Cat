@@ -58,4 +58,7 @@ class Agent:
 
         stats.print_stats()
 
-        return assistant["content"]
+        return {
+            "content": assistant["content"],
+            "thinking": assistant["thinking"]
+        }

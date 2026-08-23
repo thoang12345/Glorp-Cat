@@ -21,7 +21,7 @@ source .venv/bin/activate
 Start the **FastAPI server**:
 
 ```bash
-uvicorn web.server:app --reload
+uvicorn Web.server:app --reload
 ```
 
 `--reload` is useful during development because the FastAPI server automatically restarts when Python source files change.

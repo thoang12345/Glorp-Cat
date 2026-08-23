@@ -20,23 +20,38 @@
 
 <body>
 
-    <main id="chat">
+    <div id="app">
 
-        <div id="messages"></div>
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <div id="sidebar-title">GlorpCat</div>
 
-        <div id="input-container">
+                <button id="new-chat-button">
+                    + New chat
+                </button>
+            </div>
 
-            <textarea
-                id="message-input"
-                placeholder="Message GlorpCat..."
-                rows="1"
-            ></textarea>
+            <div id="conversation-list"></div>
+        </aside>
 
-            <button id="send-button">
-                Send
-            </button>
 
-        </div>
+        <main id="chat">
+            <div id="messages"></div>
+
+            <div id="input-container">
+                <textarea
+                    id="message-input"
+                    placeholder="Message GlorpCat..."
+                    rows="1"
+                ></textarea>
+
+                <button id="send-button">
+                    Send
+                </button>
+            </div>
+        </main>
+
+    </div>
 
     </main>
 

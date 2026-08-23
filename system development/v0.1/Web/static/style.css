@@ -21,8 +21,11 @@ body {
     display: flex;
     flex-direction: column;
 
+    width: 100%;
     max-width: 800px;
-    margin: 0 auto;
+
+    margin-left: calc(260px + max(0px, (100vw - 260px - 800px) / 2));
+    margin-right: auto;
 }
 
 #messages {
@@ -30,6 +33,140 @@ body {
 
     padding: 40px 20px 140px 20px;
 }
+
+body {
+    margin: 0;
+    background: #212121;
+    color: #ececec;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+}
+
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 260px;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 12px;
+
+    background: #171717;
+    border-right: 1px solid #2c2c2c;
+
+    overflow: hidden;
+}
+
+#sidebar-header {
+    flex-shrink: 0;
+}
+
+#sidebar-title {
+    padding: 10px 8px 14px;
+
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+#new-chat-button {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: 1px solid #383838;
+    border-radius: 10px;
+
+    background: #242424;
+    color: #ececec;
+
+    text-align: left;
+    font: inherit;
+
+    cursor: pointer;
+}
+
+#new-chat-button:hover {
+    background: #303030;
+}
+
+#conversation-list {
+    flex: 1;
+
+    margin-top: 12px;
+
+    overflow-y: auto;
+}
+
+.conversation-item {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+
+    margin-bottom: 3px;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+.conversation-item:hover {
+    background: #252525;
+}
+
+.conversation-item.active {
+    background: #303030;
+}
+
+.conversation-title {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 10px 12px;
+
+    overflow: hidden;
+
+    border: none;
+    background: transparent;
+    color: #bbb;
+
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font: inherit;
+
+    cursor: pointer;
+}
+
+.conversation-group-title {
+    padding: 18px 12px 7px;
+
+    color: #777;
+
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    user-select: none;
+}
+
+.conversation-item.active .conversation-title {
+    color: #fff;
+} 
 
 .message {
     margin-bottom: 30px;
@@ -49,6 +186,97 @@ body {
 
     width: fit-content;
     max-width: 70%;
+}
+
+.conversation-menu-container {
+    position: relative;
+
+    flex-shrink: 0;
+
+    margin-right: 6px;
+}
+
+.conversation-menu-button {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #888;
+
+    font-size: 1.1rem;
+    line-height: 1;
+
+    cursor: pointer;
+
+    opacity: 0;
+}
+
+.conversation-item:hover
+.conversation-menu-button,
+.conversation-item.active
+.conversation-menu-button {
+    opacity: 1;
+}
+
+.conversation-menu-button:hover {
+    background: #3a3a3a;
+    color: #eee;
+}
+
+.floating-conversation-menu {
+    position: fixed;
+
+    z-index: 1000;
+
+    min-width: 130px;
+
+    padding: 5px;
+
+    border: 1px solid #383838;
+    border-radius: 9px;
+
+    background: #242424;
+
+    box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.conversation-menu-option {
+    width: 100%;
+
+    padding: 8px 10px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #ddd;
+
+    text-align: left;
+
+    font: inherit;
+    font-size: 0.9rem;
+
+    cursor: pointer;
+}
+
+.conversation-menu-option:hover {
+    background: #333;
+}
+
+.conversation-menu-option.delete-option {
+    color: #ff8d8d;
+}
+
+.conversation-menu-option.delete-option:hover {
+    background: #3a2929;
 }
 
 .assistant-message {
@@ -96,9 +324,12 @@ body {
 #input-container {
     position: fixed;
 
+    left: calc(260px + (100vw - 260px) / 2);
+    transform: translateX(-50%);
+
     bottom: 20px;
 
-    width: calc(100% - 40px);
+    width: calc(100% - 300px);
     max-width: 760px;
 
     display: flex;
