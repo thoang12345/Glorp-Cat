@@ -248,6 +248,122 @@ body {
         0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
+#composer-row {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.attachment-preview.hidden {
+    display: none;
+}
+
+.attachment-preview {
+    width: 100%;
+
+    display: flex;
+
+    padding: 2px 4px 6px;
+}
+
+.attachment-card {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    max-width: 280px;
+
+    padding: 8px;
+
+    border: 1px solid #454545;
+    border-radius: 12px;
+
+    background: #292929;
+}
+
+.attachment-image {
+    width: 54px;
+    height: 54px;
+
+    border-radius: 8px;
+
+    object-fit: cover;
+}
+
+.attachment-icon {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #383838;
+
+    font-size: 1.5rem;
+}
+
+.attachment-info {
+    min-width: 0;
+
+    padding-right: 24px;
+}
+
+.attachment-name {
+    overflow: hidden;
+
+    color: #eee;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.attachment-type {
+    margin-top: 3px;
+
+    color: #999;
+
+    font-size: 0.75rem;
+}
+
+.attachment-remove {
+    position: absolute;
+
+    top: 5px;
+    right: 5px;
+
+    width: 22px;
+    height: 22px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #444;
+    color: #ddd;
+
+    cursor: pointer;
+}
+
+.attachment-remove:hover {
+    background: #555;
+    color: #fff;
+}
+
 .conversation-menu-option {
     width: 100%;
 
@@ -323,6 +439,7 @@ body {
 
 #input-container {
     position: fixed;
+    flex-direction: column;
 
     left: calc(260px + (100vw - 260px) / 2);
     transform: translateX(-50%);
@@ -342,6 +459,8 @@ body {
     border-radius: 24px;
 }
 
+
+
 #message-input {
     flex: 1;
 
@@ -356,6 +475,38 @@ body {
     font: inherit;
 
     padding: 8px;
+}
+
+#attach-button {
+    flex-shrink: 0;
+
+    width: 36px;
+    height: 36px;
+
+    align-self: center;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+    color: #bbb;
+
+    font-size: 1.6rem;
+    font-weight: 300;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+#attach-button:hover {
+    background: #444;
+    color: #fff;
 }
 
 #send-button {

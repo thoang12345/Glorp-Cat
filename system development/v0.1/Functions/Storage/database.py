@@ -1,9 +1,8 @@
 import sqlite3
 from pathlib import Path
+from Functions.Model.config import DATA_PATH
 
-
-DATABASE_PATH = Path("Data/glorp_cat.db")
-
+DATABASE_PATH = (DATA_PATH / "glorp_cat.db")
 
 class Database:
     def __init__(self):
@@ -48,10 +47,7 @@ class Database:
             ORDER BY updated_at DESC
         """)
 
-        return [
-            dict(row)
-            for row in cursor.fetchall()
-        ]
+        return [dict(row) for row in cursor.fetchall()]
 
     def get_conversation(self, conversation_id):
         cursor = self.connection.cursor()
@@ -130,6 +126,53 @@ class Database:
 
         return cursor.lastrowid
 
+    def add_attachment(
+            self,
+            conversation_id,
+            message_id,
+            original_name,
+            file_path,
+            content_type,
+            size,
+    ):
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO attachments (
+                conversation_id,
+                message_id,
+                original_name,
+                file_path,
+                content_type,
+                size
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                conversation_id,
+                message_id,
+                original_name,
+                str(file_path),
+                content_type,
+                size
+            )
+        )
+
+        attachment_id = cursor.lastrowid
+
+        cursor.execute("""
+            UPDATE conversations
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (conversation_id,)
+        )
+
+        self.connection.commit()
+
+        return attachment_id
+
     def delete_conversation(self, conversation_id):
         cursor = self.connection.cursor()
 
@@ -191,6 +234,27 @@ class Database:
                 FOREIGN KEY (conversation_id)
                     REFERENCES conversations(id)
                     ON DELETE CASCADE
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS attachments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL,
+                message_id INTEGER NOT NULL,
+                original_name TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                content_type TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (conversation_id)
+                    REFERENCES conversations(id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (message_id)
+                    REFERENCES messages(id)
+                    ON DELETE CASCADE 
             )
         """)
 

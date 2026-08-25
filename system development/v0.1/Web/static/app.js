@@ -7,6 +7,17 @@ const conversationList =
 const newChatButton =
     document.getElementById("new-chat-button");
 
+const attachButton =
+    document.getElementById("attach-button");
+
+const attachmentPreview =
+    document.getElementById(
+        "attachment-preview"
+    );
+
+const fileInput =
+    document.getElementById("file-input");
+
 const ws = new WebSocket(
     `ws://${window.location.host}/ws/chat`
 );
@@ -19,6 +30,8 @@ let currentMarkdown = "";
 let activeTools = {};
 
 let currentConversationId = null;
+let currentAttachment = null;
+let currentAttachmentUrl = null;
 
 let autoScroll = true;
 
@@ -968,6 +981,128 @@ async function loadConversations() {
     return conversations;
 }
 
+function setAttachment(file) {
+    clearAttachment();
+
+    currentAttachment = file;
+
+    attachmentPreview.innerHTML = "";
+    attachmentPreview.classList.remove("hidden");
+
+
+    const card = document.createElement("div");
+
+    card.classList.add("attachment-card");
+
+
+    if (file.type.startsWith("image/")) {
+        currentAttachmentUrl =
+            URL.createObjectURL(file);
+
+        const image =
+            document.createElement("img");
+
+        image.classList.add(
+            "attachment-image"
+        );
+
+        image.src = currentAttachmentUrl;
+        image.alt = file.name;
+
+        card.appendChild(image);
+    }
+
+    else {
+        const icon =
+            document.createElement("div");
+
+        icon.classList.add(
+            "attachment-icon"
+        );
+
+        if (file.type.startsWith("audio/")) {
+            icon.textContent = "♪";
+        }
+
+        else {
+            icon.textContent = "↗";
+        }
+
+        card.appendChild(icon);
+    }
+
+
+    const info = document.createElement("div");
+
+    info.classList.add("attachment-info");
+
+
+    const name = document.createElement("div");
+
+    name.classList.add("attachment-name");
+    name.textContent = file.name;
+
+
+    const type = document.createElement("div");
+
+    type.classList.add("attachment-type");
+
+    if (file.type.startsWith("image/")) {
+        type.textContent = "Image";
+    }
+
+    else if (file.type.startsWith("audio/")) {
+        type.textContent = "Audio";
+    }
+
+    else {
+        type.textContent = "File";
+    }
+
+
+    info.appendChild(name);
+    info.appendChild(type);
+
+
+    const removeButton =
+        document.createElement("button");
+
+    removeButton.classList.add(
+        "attachment-remove"
+    );
+
+    removeButton.textContent = "×";
+    removeButton.title = "Remove attachment";
+
+    removeButton.addEventListener(
+        "click",
+        clearAttachment
+    );
+
+
+    card.appendChild(info);
+    card.appendChild(removeButton);
+
+    attachmentPreview.appendChild(card);
+}
+
+function clearAttachment() {
+    if (currentAttachmentUrl) {
+        URL.revokeObjectURL(
+            currentAttachmentUrl
+        );
+
+        currentAttachmentUrl = null;
+    }
+
+    currentAttachment = null;
+
+    fileInput.value = "";
+
+    attachmentPreview.innerHTML = "";
+    attachmentPreview.classList.add("hidden");
+}
+
 function openConversationMenu(
     button,
     conversation
@@ -1150,6 +1285,26 @@ input.addEventListener(
 newChatButton.addEventListener(
     "click",
     startNewChat
+);
+
+attachButton.addEventListener(
+    "click",
+    () => {
+        fileInput.click();
+    }
+);
+
+fileInput.addEventListener(
+    "change",
+    () => {
+        const file = fileInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        setAttachment(file);
+    }
 );
 
 document.addEventListener(

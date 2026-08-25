@@ -1,13 +1,5 @@
-from pydantic import BaseModel, ConfigDict, ValidationError
+import uuid
 
-class UpdateName(BaseModel):
-    title : str 
-
-
-#endpoint
-@app.patch("/api/conversations/{conversation_id}")
-async def rename_conversation(
-    conversation_id: int,
-    new_name: UpdateName
-):
-    new_name.title
+# Generate a time-based UUID (Version 7)
+time_id = uuid.uuid7()
+print(f"Sorted Time UUID: {time_id}")

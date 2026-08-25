@@ -109,6 +109,29 @@ class ConversationManager:
 
         return deleted  
 
+    def add_attachment(            
+            self,
+            conversation_id,
+            message_id,
+            original_name,
+            file_path,
+            content_type,
+            size,
+            ):
+        attached = self.database.add_attachment(
+            conversation_id,
+            message_id,
+            original_name,
+            file_path,
+            content_type,
+            size,
+        )
+
+        if attached is None:
+            return None
+
+        return attached
+
     def get_conversation(self, conversation_id):
         return self.database.get_conversation(
             conversation_id

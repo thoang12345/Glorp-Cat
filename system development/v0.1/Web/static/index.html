@@ -37,17 +37,43 @@
 
         <main id="chat">
             <div id="messages"></div>
-
+            
             <div id="input-container">
-                <textarea
-                    id="message-input"
-                    placeholder="Message GlorpCat..."
-                    rows="1"
-                ></textarea>
 
-                <button id="send-button">
-                    Send
-                </button>
+                <div
+                    id="attachment-preview"
+                    class="attachment-preview hidden"
+                ></div>
+
+                <div id="composer-row">
+
+                    <button
+                        id="attach-button"
+                        type="button"
+                        title="Attach file"
+                    >
+                        +
+                    </button>
+
+                    <input
+                        id="file-input"
+                        type="file"
+                        accept="image/*,audio/*,.txt,.md,.py,.json,.csv"
+                        hidden
+                    >
+
+                    <textarea
+                        id="message-input"
+                        placeholder="Message GlorpCat..."
+                        rows="1"
+                    ></textarea>
+
+                    <button id="send-button">
+                        Send
+                    </button>
+
+                </div>
+
             </div>
         </main>
 

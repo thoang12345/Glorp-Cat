@@ -1,22 +1,31 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    WebSocket, 
+    WebSocketDisconnect, 
+    UploadFile, 
+    File,
+    Form
+    )
 
 from Functions.Agent.factory import (
     create_runtime,
     create_agent
 )
 from Functions.Storage.database import Database
+from Functions.Model.config import DATA_PATH
+
 from Functions.Conversation.manager import ConversationManager
 from pydantic import BaseModel
+import uuid
+from pathlib import Path
 
 runtime = None
 database = None
 conversation_manager = None
-
 
 class UpdateName(BaseModel):
     title : str 
@@ -78,6 +87,78 @@ async def get_conversation(conversation_id: int):
         }
 
     return conversation
+
+@app.post("/api/attachments")
+async def upload_attachments(
+    file : UploadFile = File(...),
+    conversation_id : int = Form(...),
+    message_id: int = Form(...)
+):
+    conversation = conversation_manager.get_conversation(
+        conversation_id
+    )
+
+    if conversation is None:
+        return {
+            "error": "Conversation not found"
+        }
+
+    messages = conversation["messages"]
+
+    match = None
+    for message in messages:
+        if message_id != message["id"]:
+            continue
+
+        match = message 
+        break
+
+    if match is None:
+        return {
+            "error": "Message not found"
+        }
+
+    if match["role"] != "user":
+        return {
+            "error": "Message not from user"
+        }
+
+    conversation_media = DATA_PATH / "media" / str(conversation_id) 
+
+    conversation_media.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+    contents = await file.read()
+    original = Path(file.filename)
+    name = original.stem.replace(" ", "_")
+    extension = original.suffix
+
+    stored_name = f"{conversation_id}_{message_id}_{uuid.uuid7()}_{name}{extension}"
+    file_path = conversation_media / stored_name
+
+    file_path.write_bytes(contents)
+
+    attachment_id = conversation_manager.add_attachment(
+        conversation_id=conversation_id,
+        message_id=match["id"],
+        original_name=file.filename,
+        file_path=file_path,
+        content_type=file.content_type,
+        size=len(contents)
+    )
+
+    if attachment_id is None:
+        file_path.unlink()
+        return {
+            "error": "Failed to save attachment"
+        }
+
+    return {
+        "attached": True,
+        "id": attachment_id,
+    }
 
 @app.get("/api/health")
 async def health():
