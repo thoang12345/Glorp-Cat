@@ -132,6 +132,19 @@ class ConversationManager:
 
         return attached
 
+    def get_attachment(self, conversation_id, attachment_id):
+        attachment = self.database.get_attachment(
+            attachment_id
+        )
+
+        if attachment is None:
+            return None
+
+        if attachment["conversation_id"] != conversation_id:
+            return None
+
+        return attachment
+
     def get_conversation(self, conversation_id):
         return self.database.get_conversation(
             conversation_id

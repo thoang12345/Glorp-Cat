@@ -11,10 +11,7 @@ from fastapi import (
     Form
     )
 
-from Functions.Agent.factory import (
-    create_runtime,
-    create_agent
-)
+from Functions.Agent.factory import create_runtime
 from Functions.Storage.database import Database
 from Functions.Model.config import DATA_PATH
 
@@ -22,10 +19,12 @@ from Functions.Conversation.manager import ConversationManager
 from pydantic import BaseModel
 import uuid
 from pathlib import Path
+import asyncio
 
 runtime = None
 database = None
 conversation_manager = None
+pending_attachments = {}
 
 class UpdateName(BaseModel):
     title : str 
@@ -155,6 +154,11 @@ async def upload_attachments(
             "error": "Failed to save attachment"
         }
 
+    event = pending_attachments.get(message_id)
+
+    if event is not None:
+        event.set()
+
     return {
         "attached": True,
         "id": attachment_id,
@@ -210,23 +214,49 @@ async def websocket_chat(websocket: WebSocket):
 
             conversation_id = data["conversation_id"]
             message = data["message"]
-
+            has_attachment = data.get("has_attachment", False)
             agent = conversation_manager.get_agent(
                 conversation_id
             )
-
+            
             if agent is None:
                 await websocket.send_json({
                     "type": "error",
                     "data": "Conversation not found"
                 })
                 continue
-
-            database.add_message(
+            
+            message_id = database.add_message(
                 conversation_id=conversation_id,
                 role="user",
                 content=message
             )
+
+            if has_attachment:
+                event = asyncio.Event()
+                pending_attachments[message_id] = event
+
+            await websocket.send_json({
+                "type": "user_message_saved",
+                "data": {
+                    "conversation_id": conversation_id,
+                    "message_id": message_id
+                }
+            })
+
+            if has_attachment:
+                try:
+                    await asyncio.wait_for(event.wait(), timeout=30.0)
+
+                except TimeoutError:
+                    await websocket.send_json({
+                        "type": "error",
+                        "data": "Image upload failed (Timedout)"
+                    })
+                    continue
+
+                finally:
+                    pending_attachments.pop(message_id, None)
 
             title = conversation_manager.set_title_from_message(
                 conversation_id,

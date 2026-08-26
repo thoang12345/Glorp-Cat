@@ -173,6 +173,27 @@ class Database:
 
         return attachment_id
 
+    def get_attachment(self, attachment_id):
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM attachments
+            WHERE id = ?
+            """,
+            (attachment_id,)
+        )
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        attachment_info = dict(row)
+
+        return attachment_info
+
     def delete_conversation(self, conversation_id):
         cursor = self.connection.cursor()
 

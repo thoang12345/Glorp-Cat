@@ -40,7 +40,7 @@ ws.onopen = () => {
 };
 
 
-ws.onmessage = (event) => {
+ws.onmessage = async (event) => {
     const message = JSON.parse(event.data);
 
     if (message.type === "thinking_delta") {
@@ -57,6 +57,27 @@ ws.onmessage = (event) => {
 
         currentMarkdown += message.data;
         renderMarkdown();
+    }
+
+    else if (message.type === "user_message_saved") {
+        if (currentAttachment) {
+            try {
+                await uploadAttachment(
+                    currentAttachment,
+                    message.data.conversation_id,
+                    message.data.message_id
+                );
+
+                clearAttachment();
+            }
+
+            catch (error) {
+                console.error(
+                    "Attachment upload failed:",
+                    error
+                );
+            }
+        }
     }
 
     else if (message.type === "done") {
@@ -416,6 +437,11 @@ async function sendMessage() {
             return;
         }
     }
+    let hasAttachment = false;
+
+    if (currentAttachment !== null) {
+        hasAttachment = true;
+    }
 
     addUserMessage(text);
     createAssistantMessage();
@@ -424,7 +450,8 @@ async function sendMessage() {
 
     ws.send(JSON.stringify({
         conversation_id: currentConversationId,
-        message: text
+        message: text,
+        has_attachment: hasAttachment
     }));
 
     input.value = "";
@@ -1084,6 +1111,48 @@ function setAttachment(file) {
     card.appendChild(removeButton);
 
     attachmentPreview.appendChild(card);
+}
+
+async function uploadAttachment(
+    file,
+    conversationId,
+    messageId
+) {
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    formData.append(
+        "conversation_id",
+        conversationId
+    );
+
+    formData.append(
+        "message_id",
+        messageId
+    );
+
+    const response = await fetch(
+        "/api/attachments",
+        {
+            method: "POST",
+            body: formData
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Attachment upload failed: ${response.status}`
+        );
+    }
+
+    const result = await response.json();
+
+    if (result.error) {
+        throw new Error(result.error);
+    }
+
+    return result;
 }
 
 function clearAttachment() {
