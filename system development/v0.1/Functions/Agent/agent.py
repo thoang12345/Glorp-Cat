@@ -14,16 +14,16 @@ class Agent:
         self.mcp_manager = mcp_manager
         self.model_manager = model_manager
 
-    async def chat(self, user_input, on_event=None):
+    async def chat(self, user_input, attachments=None, on_event=None):
         stats = ResponseStats()
         stats.set_model(
             self.model_manager.info
         )
-        self.conversation.add_user(user_input)
+        self.conversation.add_user(user_input, attachments)
 
         while True:
             assistant = await streamResponse(
-                self.conversation.messages,
+                self.conversation.get_model_messages(),
                 self.tool_manager,
                 stats,
                 on_event=on_event

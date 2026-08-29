@@ -32,6 +32,7 @@ let activeTools = {};
 let currentConversationId = null;
 let currentAttachment = null;
 let currentAttachmentUrl = null;
+let currentUserMessage = null;
 
 let autoScroll = true;
 
@@ -62,11 +63,21 @@ ws.onmessage = async (event) => {
     else if (message.type === "user_message_saved") {
         if (currentAttachment) {
             try {
-                await uploadAttachment(
-                    currentAttachment,
-                    message.data.conversation_id,
-                    message.data.message_id
-                );
+                const attachment = 
+                    await uploadAttachment(
+                        currentAttachment,
+                        message.data.conversation_id,
+                        message.data.message_id
+                    );
+
+                    addMessageAttachment(
+                        currentUserMessage,
+                        {
+                            id: attachment.id,
+                            original_name: currentAttachment.name,
+                            content_type: currentAttachment.type
+                        }
+                    );
 
                 clearAttachment();
             }
@@ -443,7 +454,7 @@ async function sendMessage() {
         hasAttachment = true;
     }
 
-    addUserMessage(text);
+    currentUserMessage = addUserMessage(text);
     createAssistantMessage();
 
     autoScroll = true;
@@ -460,6 +471,105 @@ async function sendMessage() {
     scrollToBottom(true);
 }
 
+function addUserMessage(text, attachments = []) {
+    const element = document.createElement("div");
+
+    element.classList.add(
+        "message",
+        "user-message"
+    );
+
+    const textElement = document.createElement("div");
+
+    textElement.textContent = text;
+
+    element.appendChild(textElement);
+
+    if (attachments.length > 0) {
+        for (const attachment of attachments) {
+            const attachmentElement =
+                document.createElement("div");
+
+            attachmentElement.classList.add(
+                "message-attachment"
+            );
+
+            if (
+                attachment.content_type &&
+                attachment.content_type.startsWith("image/")
+            ) {
+                const image =
+                    document.createElement("img");
+
+                image.src = `/api/attachments/${attachment.id}`;
+
+                image.alt =
+                    attachment.original_name;
+
+                image.classList.add(
+                    "message-attachment-image"
+                );
+
+                attachmentElement.appendChild(image);
+            }
+
+            else {
+                attachmentElement.textContent =
+                    attachment.original_name;
+            }
+
+            element.appendChild(
+                attachmentElement
+            );
+        }
+    }
+
+    messages.appendChild(element);
+
+    return element;
+}
+
+function addMessageAttachment(
+    messageElement,
+    attachment
+) {
+    const attachmentElement =
+        document.createElement("div");
+
+    attachmentElement.classList.add(
+        "message-attachment"
+    );
+
+    if (
+        attachment.content_type &&
+        attachment.content_type.startsWith("image/")
+    ) {
+        const image =
+            document.createElement("img");
+
+        image.src =
+            `/api/attachments/${attachment.id}`;
+
+        image.alt =
+            attachment.original_name;
+
+        image.classList.add(
+            "message-attachment-image"
+        );
+
+        attachmentElement.appendChild(image);
+    }
+
+    else {
+        attachmentElement.textContent =
+            attachment.original_name;
+    }
+
+    messageElement.appendChild(
+        attachmentElement
+    );
+}
+
 function addThinkingDelta(text) {
     if (!currentThinkingBlock) {
         currentThinkingBlock = document.createElement("div");
@@ -472,20 +582,6 @@ function addThinkingDelta(text) {
 
     currentThinkingBlock.textContent += text;
 }
-
-function addUserMessage(text) {
-    const element = document.createElement("div");
-
-    element.classList.add(
-        "message",
-        "user-message"
-    );
-
-    element.textContent = text;
-
-    messages.appendChild(element);
-}
-
 
 function createAssistantMessage() {
     currentMarkdown = "";
@@ -750,7 +846,8 @@ async function loadConversation(conversationId) {
     for (const message of conversation.messages) {
         if (message.role === "user") {
             addUserMessage(
-                message.content
+                message.content,
+                message.attachments
             );
         }
 

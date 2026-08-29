@@ -81,6 +81,13 @@ class Database:
             for row in cursor.fetchall()
         ]
 
+        for message in messages:
+            attachments = self.get_attachments_for_message(
+                message["id"]
+            )
+
+            message["attachments"] = attachments
+
         result = dict(conversation)
         result["messages"] = messages
 
@@ -193,6 +200,25 @@ class Database:
         attachment_info = dict(row)
 
         return attachment_info
+
+    def get_attachments_for_message(self, message_id):
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM attachments
+            WHERE message_id = ?
+            """,
+            (message_id,)
+        )
+
+        attachments = [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
+
+        return attachments
 
     def delete_conversation(self, conversation_id):
         cursor = self.connection.cursor()

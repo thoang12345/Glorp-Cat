@@ -2,8 +2,6 @@ import ollama
 
 from Functions.Model.config import VISION_NAME
 
-
-
 class MediaInspector:
     def __init__(self):
         self.client = ollama.AsyncClient()

@@ -56,5 +56,17 @@ class InspectMedia(Tool):
                 "attachment_id": attachment_id
             }
         
+        content_type = attachment["content_type"]
+        if content_type.startswith("image/"):
+            file_path = attachment["file_path"]
 
-        
+            response = await self.media_inspector.inspect_image(file_path, question)
+        else:
+            return {
+                "error": "invalid file type",
+                "content_type": content_type
+            }
+
+        return {
+            "response": response
+        }

@@ -1,4 +1,5 @@
 from Functions.Agent.factory import create_agent
+from Functions.Tools.inspectMedia import InspectMedia
 
 def make_title(message, max_length=40):
     title = " ".join(
@@ -27,8 +28,20 @@ class ConversationManager:
             title
         )
 
-        agent = create_agent(self.runtime)
+        agent = create_agent(
+            self.runtime,
+            conversation_id=conversation_id
+            )
 
+        media_inspector = self.runtime.media_inspector
+        
+        tool = InspectMedia(
+            conversation_id=conversation_id,
+            conversation_manager=self,
+            media_inspector=media_inspector
+        )
+
+        agent.tool_manager.register(tool)
         self.agents[conversation_id] = agent
 
         return conversation_id
@@ -49,8 +62,19 @@ class ConversationManager:
 
         agent = create_agent(
             self.runtime,
-            messages=stored["messages"]
+            messages=stored["messages"],
+            conversation_id=conversation_id
         )
+
+        media_inspector = self.runtime.media_inspector
+
+        tool = InspectMedia(
+            conversation_id=conversation_id,
+            conversation_manager=self,
+            media_inspector=media_inspector
+        )
+
+        agent.tool_manager.register(tool)
 
         self.agents[conversation_id] = agent
 
@@ -145,11 +169,25 @@ class ConversationManager:
 
         return attachment
 
+    def get_attachments_for_message(self, message_id):
+        attachment_for_message = self.database.get_attachments_for_message(
+            message_id
+        )
+
+        return attachment_for_message
+
     def get_conversation(self, conversation_id):
         return self.database.get_conversation(
             conversation_id
         )
 
+    def get_attachment_by_id(self, attachment_id):
+        attachment = self.database.get_attachment(attachment_id)
+
+        if not attachment:
+            return None
+
+        return attachment    
 
     def get_conversations(self):
         return self.database.get_conversations()

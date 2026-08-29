@@ -40,6 +40,19 @@ class ToolManager:
                     and issubclass(obj, Tool)
                     and not inspect.isabstract(obj)
                 ):
+                    signature = inspect.signature(obj.__init__)
+
+                    required_parameters = []
+                    for parameter in signature.parameters.values():
+                        if parameter.name == "self":
+                            continue
+
+                        if parameter.default == inspect.Parameter.empty:
+                            required_parameters.append(parameter)
+                            
+                    if required_parameters:
+                        continue
+                                            
                     self.register(obj())
 
     def schema(self):

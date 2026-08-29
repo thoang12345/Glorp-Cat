@@ -335,6 +335,23 @@ body {
     font-size: 0.75rem;
 }
 
+.message-attachment {
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 8px;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.message-attachment-image {
+    display: block;
+    max-width: 400px;
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
 .attachment-remove {
     position: absolute;
 

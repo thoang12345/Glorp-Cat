@@ -164,6 +164,24 @@ async def upload_attachments(
         "id": attachment_id,
     }
 
+@app.get("/api/attachments/{attachment_id}")
+async def get_attachment(attachment_id: int):
+    attachment = conversation_manager.get_attachment_by_id(attachment_id=attachment_id)
+
+    if attachment is None:
+        return{
+            "error": "Attachment not found"
+        }
+
+    file_path = Path(attachment["file_path"])
+
+    if not file_path.exists():
+        return{
+            "error": "File not found"
+        }
+
+    return FileResponse(file_path, media_type=attachment["content_type"])
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
@@ -274,9 +292,15 @@ async def websocket_chat(websocket: WebSocket):
             async def send_event(event):
                 await websocket.send_json(event)
 
+            attachments = conversation_manager.get_attachments_for_message(
+                message_id=message_id
+            )
+
             assistant = await agent.chat(
                 message,
-                on_event=send_event
+                attachments = attachments,
+                on_event=send_event,
+                
             )
 
             database.add_message(
