@@ -95,6 +95,7 @@ ws.onmessage = async (event) => {
         currentAssistant.thinkingDetails.open = false;
         currentAssistant.thinkingSummary.textContent = "Thought";
 
+        await renderMath(currentAssistant);
         currentAssistant = null;
         currentThoughtStream = null;
         currentThinkingBlock = null;
@@ -326,12 +327,57 @@ function enhanceCodeBlocks(container) {
 }
 
 function renderMarkdown() {
-    const html = marked.parse(currentMarkdown);
+    const protectedMath = protectMath(
+        currentMarkdown
+    );
+
+    let html = marked.parse(
+        protectedMath.text
+    );
+
+    protectedMath.mathBlocks.forEach(
+        (math, index) => {
+            html = html.replace(
+                `@@MATH_${index}@@`,
+                math
+            );
+        }
+    );
 
     currentAssistant.innerHTML =
         DOMPurify.sanitize(html);
 
     enhanceCodeBlocks(currentAssistant);
+}
+
+async function renderMath(element) {
+    if (!window.MathJax) {
+        return;
+    }
+
+    MathJax.typesetClear([element]);
+
+    await MathJax.typesetPromise([element]);
+}
+
+function protectMath(text) {
+    const mathBlocks = [];
+
+    const protectedText = text.replace(
+        /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g,
+        (match) => {
+            const index = mathBlocks.length;
+
+            mathBlocks.push(match);
+
+            return `@@MATH_${index}@@`;
+        }
+    );
+
+    return {
+        text: protectedText,
+        mathBlocks
+    };
 }
 
 function renderStats(stats) {
@@ -1426,6 +1472,8 @@ function addStoredAssistantMessage(message) {
     messages.appendChild(container);
 
     enhanceCodeBlocks(content);
+
+    renderMath(content);
 }
 
 sendButton.addEventListener(

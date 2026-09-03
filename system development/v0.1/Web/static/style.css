@@ -345,10 +345,13 @@ body {
 
 .message-attachment-image {
     display: block;
-    max-width: 400px;
-    max-height: 400px;
+
+    max-width: 320px;
+    max-height: 320px;
+
     width: auto;
     height: auto;
+
     object-fit: contain;
 }
 
@@ -415,6 +418,8 @@ body {
 .assistant-message {
     width: 100%;
 }
+
+
 
 .thinking-container {
     margin-bottom: 16px;
@@ -765,6 +770,22 @@ body {
 
 .assistant-content tr:nth-child(even) {
     background: #262626;
+}
+
+.assistant-content img {
+    display: block;
+
+    max-width: 100%;
+    max-height: 500px;
+
+    width: auto;
+    height: auto;
+
+    margin: 12px 0;
+
+    border-radius: 8px;
+
+    object-fit: contain;
 }
 
 .code-block {
