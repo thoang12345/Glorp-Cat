@@ -21,7 +21,7 @@ source .venv/bin/activate
 Start the **FastAPI server**:
 
 ```bash
-uvicorn Web.server:app --reload --reload-exclude "Data/media/*"
+uvicorn Web.server:app --reload --reload-exclude "**/Data/media/**"
 ```
 
 `--reload` is useful during development because the FastAPI server automatically restarts when Python source files change.
