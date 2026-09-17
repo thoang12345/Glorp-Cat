@@ -63,12 +63,14 @@ class ToolManager:
         stats,
         name,
         on_event=None,
+        conversation_id=None,
         **kwargs
     ):
         async def emit(event_type, data):
             if on_event:
                 await on_event({
                     "type": event_type,
+                    "conversation_id": conversation_id,
                     "data": data
                 })
 
@@ -102,7 +104,8 @@ class ToolManager:
         self,
         stats,
         tool_calls,
-        on_event=None
+        on_event=None,
+        conversation_id=None
     ):
         messages = []
 
@@ -114,6 +117,7 @@ class ToolManager:
                 stats,
                 name,
                 on_event=on_event,
+                conversation_id=conversation_id,
                 **args
             )
 

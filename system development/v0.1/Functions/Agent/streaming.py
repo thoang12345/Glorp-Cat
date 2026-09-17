@@ -6,13 +6,15 @@ async def streamResponse(
     messages: dict,
     toolManager,
     stats,
-    on_event=None
+    on_event=None,
+    conversation_id=None
 ) -> dict[str, str]:
 
     async def emit(event_type, data):
         if on_event:
             await on_event({
                 "type": event_type,
+                "conversation_id": conversation_id,
                 "data": data
             })
 

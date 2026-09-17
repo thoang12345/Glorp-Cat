@@ -256,6 +256,83 @@ body {
     gap: 10px;
 }
 
+.image-viewer-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    background: rgba(0, 0, 0, 0.8);
+
+    cursor: zoom-out;
+}
+
+.image-viewer-image {
+    max-width: 90vw;
+    max-height: 90vh;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    border-radius: 10px;
+}
+
+.message-attachment-image {
+    cursor: zoom-in;
+}
+
+.message-attachment {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    width: fit-content;
+    max-width: 320px;
+
+    margin-top: 8px;
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.message-attachment-icon {
+    width: 28px;
+    height: 28px;
+
+    flex-shrink: 0;
+}
+
+.message-attachment-info {
+    min-width: 0;
+}
+
+.message-attachment-name {
+    font-size: 14px;
+    font-weight: 500;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.message-attachment-type {
+    margin-top: 2px;
+
+    font-size: 12px;
+    opacity: 0.65;
+}
+
 .attachment-preview.hidden {
     display: none;
 }
@@ -466,6 +543,7 @@ body {
     left: calc(260px + (100vw - 260px) / 2);
     transform: translateX(-50%);
 
+    top: auto;
     bottom: 20px;
 
     width: calc(100% - 300px);
@@ -479,9 +557,18 @@ body {
     padding: 12px;
 
     border-radius: 24px;
+
+    transition:
+        top 0.5s ease,
+        bottom 0.5s ease,
+        transform 0.5s ease;
 }
 
-
+#chat.new-chat #input-container {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+}
 
 #message-input {
     flex: 1;

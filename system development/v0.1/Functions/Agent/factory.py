@@ -85,5 +85,6 @@ def create_agent(runtime, messages=None, conversation_id=None):
         tool_manager=agent_tool_manager,
         conversation=conversation,
         mcp_manager=runtime.mcp_manager,
-        model_manager=runtime.model_manager
+        model_manager=runtime.model_manager,
+        conversation_id=conversation_id
     )
