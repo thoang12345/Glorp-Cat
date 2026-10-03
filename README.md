@@ -32,8 +32,118 @@ Glorp-Cat keeps each responsibility separate so the project can grow without tur
 | Local model backend | Runs the language model and produces chat/tool-call responses. |
 | Agent layer | Coordinates messages, reasoning output, tool calls, and final responses. |
 | MCP tools | Adds capabilities such as search and other external actions through a standard interface. |
-| RAG pipeline | Parses, chunks, embeds, and retrieves information from local documents. |
+| RAG pipeline *(in integration)* | Parses, chunks, embeds, and retrieves information from local documents for use by Glorp-Cat. |
 | FastAPI browser UI | Provides a more convenient interface than the terminal while using the same backend. |
+
+## RAG pipeline *(work in progress)*
+
+> **Project status:** 🚧 **Work in Progress**
+>
+> Glorp-Cat's Retrieval-Augmented Generation (RAG) pipeline is actively being developed and integrated into the agent. The overall architecture is in place, but several stages are still being refined, optimized, and connected to the main Glorp-Cat workflow. Parser configurations, chunking strategies, and retrieval quality should be considered experimental until the pipeline is complete.
+
+### Overview
+
+The RAG component is a modular document-ingestion pipeline that processes a wide variety of technical documents into a searchable vector database. Once integrated, it will give Glorp-Cat a local knowledge base that it can retrieve from when answering questions about injected project documents.
+
+The pipeline uses interchangeable parsing backends so each document type can be processed by the parser best suited to it. Current development focuses on bringing **Docling** and **Marker 2** into a common workflow while retaining unified downstream chunking and retrieval.
+
+Current execution flow:
+
+```text
+Input/
+   │
+   ▼
+GPU / System Initialization
+   │
+   ▼
+Initialize Docling Chunker
+   │
+   ▼
+Build Project Paths
+   │
+   ▼
+Create ChromaDB Client
+   │
+   ▼
+Classify Input Documents
+   │
+   ├── PDF Classification
+   └── General File Classification
+   │
+   ▼
+Display Parsing Plan
+   │
+   ▼
+Create / Open Chroma Collection
+   │
+   ▼
+(Optional) Query Existing Collection
+   │
+   ▼
+Document Conversion
+      ├── Marker 2
+      └── Docling
+```
+
+### Document classification
+
+Each document is analyzed before parsing. The classifier determines its document type, appropriate parser, parsing profile, and output location. This lets the pipeline automatically route documents to the most suitable parsing backend.
+
+### Parsing backends
+
+#### Marker 2
+
+Marker is used for high-fidelity PDF extraction, especially for scientific papers, technical reports, multi-column layouts, tables, and mathematical content.
+
+Current features include:
+
+- Native SDK integration with no CLI subprocesses
+- Optional Ollama-powered LLM processors
+- Markdown export
+- JSON export
+- Embedded-image extraction
+
+#### Docling
+
+Docling serves as the general-purpose document parser, with current work focused on general PDF parsing, Office-document support, native document chunking, and rich document-structure extraction.
+
+The long-term plan is for Docling to become the primary ingestion engine, with Marker acting as a specialized parser for complex PDFs.
+
+### Chunking *(under development)*
+
+Chunking has been partially implemented but is not yet integrated into the main execution flow. Current work includes:
+
+- Docling `HybridChunker`
+- Token-aware chunk sizing
+- Metadata generation
+- Parser-independent chunk normalization
+
+Future work includes context-aware chunk generation, parser-output normalization, chunk-quality evaluation, and retrieval benchmarking.
+
+### ChromaDB integration *(under development)*
+
+A ChromaDB client is initialized at startup and can create collections, open existing collections, and provide a basic query interface. Automatic ingestion of parsed chunks remains disabled while the chunking pipeline is finalized.
+
+### Query system
+
+A basic query interface is available for interacting with existing Chroma collections. It will grow into a full retrieval pipeline that supports similarity search, metadata filtering, source citations, and multi-document retrieval, then delivers the retrieved context to Glorp-Cat for answer generation.
+
+### Development priorities
+
+The ingestion pipeline is being completed in this order:
+
+1. Finish parser integration
+2. Finalize chunk generation
+3. Normalize metadata between parsers
+4. Integrate automatic ChromaDB ingestion
+5. Evaluate retrieval quality
+6. Add answer generation using retrieved context
+
+### Design philosophy
+
+The RAG system deliberately treats parsing, chunking, embedding, and retrieval as independent components instead of one monolithic process. This enables multiple parsing backends, independent parser benchmarking, configurable chunking strategies, future embedding-model replacement, and vector-database portability.
+
+Its long-term objective is a flexible RAG ingestion pipeline that reliably processes technical documents, remains easy to extend as parsers, embedding models, and retrieval techniques improve, and gives Glorp-Cat grounded access to the user's local document collection.
 
 ## Requirements
 
@@ -58,6 +168,10 @@ Current development is focused on finishing the document-ingestion pipeline and 
 - A graphical document-ingestion workflow
 - Additional quality-of-life improvements for the UI
 - An optional agent-loop mode for executing user-defined workflows with minimal human intervention
+
+## Related project
+
+- [PaperParsing](https://github.com/thoang12345/PaperParsing) — the standalone RAG and document-ingestion pipeline being developed for integration with Glorp-Cat.
 
 ## Status
 
